@@ -1,18 +1,20 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 
 export async function getServerSideProps({ query }) {
-  const { lang = 'en' } = query;
+  const { lang = 'en', type = 'capricorn' } = query;
   
   try {
     // 调用外部后端接口，获取今日运势
-    const res = await fetch('https://api.vvhan.com/api/horoscope?type=capricorn&time=today');
+    const res = await fetch(`https://api.vvhan.com/api/horoscope?type=${type}&time=today`);
     const data = await res.json();
     
     return {
       props: {
         apiData: data, // 直接传递接口返回的数据
-        lang
+        lang,
+        selectedZodiac: type
       }
     };
   } catch (error) {
@@ -20,14 +22,16 @@ export async function getServerSideProps({ query }) {
     return {
       props: {
         apiData: {},
-        lang
+        lang,
+        selectedZodiac: type
       }
     };
   }
 }
 
-export default function Day({ apiData, lang }) {
+export default function Day({ apiData, lang, selectedZodiac }) {
   const router = useRouter();
+  const [currentZodiac, setCurrentZodiac] = useState(selectedZodiac);
   
   // 根据 lang 参数设置 title
   const titles = {
@@ -66,6 +70,31 @@ export default function Day({ apiData, lang }) {
       'pisces': '双鱼座'
     };
     return zodiacMap[type] || type;
+  };
+  
+  // 星座选择器
+  const zodiacOptions = [
+    { value: 'aries', label: '白羊座', emoji: '♈' },
+    { value: 'taurus', label: '金牛座', emoji: '♉' },
+    { value: 'gemini', label: '双子座', emoji: '♊' },
+    { value: 'cancer', label: '巨蟹座', emoji: '♋' },
+    { value: 'leo', label: '狮子座', emoji: '♌' },
+    { value: 'virgo', label: '处女座', emoji: '♍' },
+    { value: 'libra', label: '天秤座', emoji: '♎' },
+    { value: 'scorpio', label: '天蝎座', emoji: '♏' },
+    { value: 'sagittarius', label: '射手座', emoji: '♐' },
+    { value: 'capricorn', label: '摩羯座', emoji: '♑' },
+    { value: 'aquarius', label: '水瓶座', emoji: '♒' },
+    { value: 'pisces', label: '双鱼座', emoji: '♓' }
+  ];
+  
+  // 处理星座切换
+  const handleZodiacChange = (zodiacType) => {
+    setCurrentZodiac(zodiacType);
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, type: zodiacType }
+    });
   };
   
   return (
@@ -141,6 +170,65 @@ export default function Day({ apiData, lang }) {
             font-weight: 500;
           }
           
+          .zodiac-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+          }
+          
+          .selector-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            text-align: center;
+          }
+          
+          .zodiac-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+          }
+          
+          .zodiac-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            background: #f7fafc;
+          }
+          
+          .zodiac-option:hover {
+            background: #edf2f7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          }
+          
+          .zodiac-option.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+          }
+          
+          .zodiac-emoji {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+          }
+          
+          .zodiac-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: center;
+          }
+          
           .horoscope-card {
             background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
             border-radius: 15px;
@@ -213,40 +301,6 @@ export default function Day({ apiData, lang }) {
             line-height: 1.6;
             color: #4a5568;
             font-size: 1rem;
-          }
-          
-          .lucky-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-          }
-          
-          .lucky-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: transform 0.2s ease;
-          }
-          
-          .lucky-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-          }
-          
-          .lucky-label {
-            font-size: 0.9rem;
-            color: #718096;
-            margin-bottom: 5px;
-            font-weight: 500;
-          }
-          
-          .lucky-value {
-            font-size: 1.1rem;
-            color: #2d3748;
-            font-weight: 600;
           }
           
           .fortune-scores {
@@ -350,6 +404,40 @@ export default function Day({ apiData, lang }) {
             line-height: 1.4;
           }
           
+          .lucky-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+          }
+          
+          .lucky-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease;
+          }
+          
+          .lucky-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          }
+          
+          .lucky-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 5px;
+            font-weight: 500;
+          }
+          
+          .lucky-value {
+            font-size: 1.1rem;
+            color: #2d3748;
+            font-weight: 600;
+          }
+          
           .error-message {
             text-align: center;
             color: #e53e3e;
@@ -383,6 +471,10 @@ export default function Day({ apiData, lang }) {
               margin-bottom: 25px;
             }
             
+            .zodiac-grid {
+              grid-template-columns: repeat(3, 1fr);
+            }
+            
             .zodiac-info {
               flex-direction: column;
               text-align: center;
@@ -405,6 +497,10 @@ export default function Day({ apiData, lang }) {
           @media (max-width: 480px) {
             .title {
               font-size: 1.8rem;
+            }
+            
+            .zodiac-grid {
+              grid-template-columns: repeat(2, 1fr);
             }
             
             .lucky-info {
@@ -441,6 +537,22 @@ export default function Day({ apiData, lang }) {
             </button>
             <h1 className="title">{title}</h1>
             <p className="date">{formatDate(new Date())}</p>
+          </div>
+          
+          <div className="zodiac-selector">
+            <div className="selector-title">选择你的星座</div>
+            <div className="zodiac-grid">
+              {zodiacOptions.map((zodiac) => (
+                <div
+                  key={zodiac.value}
+                  className={`zodiac-option ${currentZodiac === zodiac.value ? 'active' : ''}`}
+                  onClick={() => handleZodiacChange(zodiac.value)}
+                >
+                  <div className="zodiac-emoji">{zodiac.emoji}</div>
+                  <div className="zodiac-label">{zodiac.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
           
           {apiData.success ? (
