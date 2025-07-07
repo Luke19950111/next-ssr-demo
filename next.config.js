@@ -8,10 +8,10 @@ const nextConfig = {
     domains: ['api.vvhan.com'],
   },
   
-  // 环境变量
-  env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
-  },
+  // 环境变量配置（如果需要的话）
+  // env: {
+  //   CUSTOM_KEY: process.env.CUSTOM_KEY,
+  // },
   
   // 输出配置（如果需要静态导出）
   // output: 'export',
